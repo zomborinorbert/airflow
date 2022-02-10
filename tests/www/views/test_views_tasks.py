@@ -139,25 +139,15 @@ def client_ti_without_dag_edit(app):
         pytest.param(
             'dag_details?dag_id=example_bash_operator',
             ['DAG Details'],
-            id="dag-details-url-param",
+            id="dag-details",
         ),
         pytest.param(
             'dag_details?dag_id=example_subdag_operator.section-1',
-            ['DAG Details'],
-            id="dag-details-subdag-url-param",
-        ),
-        pytest.param(
-            'dags/example_subdag_operator.section-1/details',
             ['DAG Details'],
             id="dag-details-subdag",
         ),
         pytest.param(
             'graph?dag_id=example_bash_operator',
-            ['runme_1'],
-            id='graph-url-param',
-        ),
-        pytest.param(
-            'dags/example_bash_operator/graph',
             ['runme_1'],
             id='graph',
         ),
@@ -167,67 +157,32 @@ def client_ti_without_dag_edit(app):
             id='tree',
         ),
         pytest.param(
-            'dags/example_bash_operator/grid',
-            ['runme_1'],
-            id='grid',
-        ),
-        pytest.param(
             'tree?dag_id=example_subdag_operator.section-1',
             ['section-1-task-1'],
-            id="tree-subdag-url-param",
-        ),
-        pytest.param(
-            'dags/example_subdag_operator.section-1/grid',
-            ['section-1-task-1'],
-            id="grid-subdag",
+            id="tree-subdag",
         ),
         pytest.param(
             'duration?days=30&dag_id=example_bash_operator',
-            ['example_bash_operator'],
-            id='duration-url-param',
-        ),
-        pytest.param(
-            'dags/example_bash_operator/duration?days=30',
             ['example_bash_operator'],
             id='duration',
         ),
         pytest.param(
             'duration?days=30&dag_id=missing_dag',
             ['seems to be missing'],
-            id='duration-missing-url-param',
-        ),
-        pytest.param(
-            'dags/missing_dag/duration?days=30',
-            ['seems to be missing'],
             id='duration-missing',
         ),
         pytest.param(
             'tries?days=30&dag_id=example_bash_operator',
-            ['example_bash_operator'],
-            id='tries-url-param',
-        ),
-        pytest.param(
-            'dags/example_bash_operator/tries?days=30',
             ['example_bash_operator'],
             id='tries',
         ),
         pytest.param(
             'landing_times?days=30&dag_id=example_bash_operator',
             ['example_bash_operator'],
-            id='landing-times-url-param',
-        ),
-        pytest.param(
-            'dags/example_bash_operator/landing-times?days=30',
-            ['example_bash_operator'],
             id='landing-times',
         ),
         pytest.param(
             'gantt?dag_id=example_bash_operator',
-            ['example_bash_operator'],
-            id="gantt-url-param",
-        ),
-        pytest.param(
-            'dags/example_bash_operator/gantt',
             ['example_bash_operator'],
             id="gantt",
         ),
@@ -241,40 +196,20 @@ def client_ti_without_dag_edit(app):
         pytest.param(
             "graph?dag_id=example_bash_operator",
             ["example_bash_operator"],
-            id="existing-dagbag-graph-url-param",
-        ),
-        pytest.param(
-            "dags/example_bash_operator/graph",
-            ["example_bash_operator"],
             id="existing-dagbag-graph",
         ),
         pytest.param(
             "tree?dag_id=example_bash_operator",
             ["example_bash_operator"],
-            id="existing-dagbag-tree-url-param",
-        ),
-        pytest.param(
-            "dags/example_bash_operator/grid",
-            ["example_bash_operator"],
-            id="existing-dagbag-grid",
+            id="existing-dagbag-tree",
         ),
         pytest.param(
             "calendar?dag_id=example_bash_operator",
-            ["example_bash_operator"],
-            id="existing-dagbag-calendar-url-param",
-        ),
-        pytest.param(
-            "dags/example_bash_operator/calendar",
             ["example_bash_operator"],
             id="existing-dagbag-calendar",
         ),
         pytest.param(
             "dag_details?dag_id=example_bash_operator",
-            ["example_bash_operator"],
-            id="existing-dagbag-dag-details-url-param",
-        ),
-        pytest.param(
-            "dags/example_bash_operator/details",
             ["example_bash_operator"],
             id="existing-dagbag-dag-details",
         ),
@@ -339,7 +274,7 @@ def test_tree_trigger_origin_tree_view(app, admin_client):
 
     url = 'tree?dag_id=test_tree_view'
     resp = admin_client.get(url, follow_redirects=True)
-    params = {'dag_id': 'test_tree_view', 'origin': '/dags/test_tree_view/grid'}
+    params = {'dag_id': 'test_tree_view', 'origin': '/tree?dag_id=test_tree_view'}
     href = f"/trigger?{html.escape(urllib.parse.urlencode(params))}"
     check_content_in_response(href, resp)
 
@@ -353,9 +288,9 @@ def test_graph_trigger_origin_graph_view(app, admin_client):
         state=State.RUNNING,
     )
 
-    url = '/dags/test_tree_view/graph'
+    url = 'graph?dag_id=test_tree_view'
     resp = admin_client.get(url, follow_redirects=True)
-    params = {'dag_id': 'test_tree_view', 'origin': '/dags/test_tree_view/graph'}
+    params = {'dag_id': 'test_tree_view', 'origin': '/graph?dag_id=test_tree_view'}
     href = f"/trigger?{html.escape(urllib.parse.urlencode(params))}"
     check_content_in_response(href, resp)
 
@@ -369,9 +304,9 @@ def test_dag_details_trigger_origin_dag_details_view(app, admin_client):
         state=State.RUNNING,
     )
 
-    url = '/dags/test_graph_view/details'
+    url = 'dag_details?dag_id=test_graph_view'
     resp = admin_client.get(url, follow_redirects=True)
-    params = {'dag_id': 'test_graph_view', 'origin': '/dags/test_graph_view/details'}
+    params = {'dag_id': 'test_graph_view', 'origin': '/dag_details?dag_id=test_graph_view'}
     href = f"/trigger?{html.escape(urllib.parse.urlencode(params))}"
     check_content_in_response(href, resp)
 
@@ -413,7 +348,7 @@ def test_code_from_db(admin_client):
     dag = DagBag(include_examples=True).get_dag("example_bash_operator")
     DagCode(dag.fileloc, DagCode._get_code_from_file(dag.fileloc)).sync_to_db()
     url = 'code?dag_id=example_bash_operator'
-    resp = admin_client.get(url, follow_redirects=True)
+    resp = admin_client.get(url)
     check_content_not_in_response('Failed to load DAG file Code', resp)
     check_content_in_response('example_bash_operator', resp)
 
@@ -423,7 +358,7 @@ def test_code_from_db_all_example_dags(admin_client):
     for dag in dagbag.dags.values():
         DagCode(dag.fileloc, DagCode._get_code_from_file(dag.fileloc)).sync_to_db()
     url = 'code?dag_id=example_bash_operator'
-    resp = admin_client.get(url, follow_redirects=True)
+    resp = admin_client.get(url)
     check_content_not_in_response('Failed to load DAG file Code', resp)
     check_content_in_response('example_bash_operator', resp)
 
