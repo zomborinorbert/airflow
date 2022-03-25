@@ -541,9 +541,16 @@ class DagFileProcessorManager(LoggingMixin):
                 # The largest valid difference between a DagFileStat's last_finished_time and a DAG's
                 # last_parsed_time is _processor_timeout. Longer than that indicates that the DAG is
                 # no longer present in the file.
+                try:
+                    timeout_time = dag.last_parsed_time + self._processor_timeout
+                except OverflowError:
+                    self.log.warning(f"Adding processor timeout {self._processor_timeout} "
+                                     f"to {dag.last_parsed_time} caused an OverflowError."
+                                     f"Trying half the time")
+                    timeout_time = dag.last_parsed_time + self._processor_timeout / 2
                 if (
                     dag.fileloc in last_parsed
-                    and (dag.last_parsed_time + self._processor_timeout) < last_parsed[dag.fileloc]
+                    and timeout_time < last_parsed[dag.fileloc]
                 ):
                     self.log.info(f"DAG {dag.dag_id} is missing and will be deactivated.")
                     to_deactivate.add(dag.dag_id)
